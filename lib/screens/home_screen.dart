@@ -2,6 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:mind_bridge/constants/routes.dart';
+
+import '../constants/push_routes.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -63,13 +66,27 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         ],
       ),
-      drawer: const Drawer(),
+      drawer: Drawer(
+        child: Column(
+          children: [
+            Expanded(child: Container()),
+            ElevatedButton(
+              onPressed: (){
+                FirebaseAuth.instance.signOut();
+                pushReplacementRoute(context, loginRoute);
+              },
+              child: const Text('Sign Out'),
+            ),
+            const SizedBox(height: 50,),
+          ],
+        ),
+      ),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(20),
             child: SizedBox(
-              height: 683,
+              height: 680,
               child: ListView(
                 physics: const BouncingScrollPhysics(),
                 scrollDirection: Axis.vertical,
