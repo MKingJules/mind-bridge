@@ -1,6 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:email_validator/email_validator.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mind_bridge/constants/push_routes.dart';
 import 'package:mind_bridge/constants/routes.dart';
+import '../show_error_dialog.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -10,10 +14,28 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  final _firestore = FirebaseFirestore.instance;
   final formKey = GlobalKey<FormState>();
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
+
+  void validator(emailController) =>
+      emailController != null && !EmailValidator.validate(emailController)
+          ? 'Enter a valid email'
+          : null;
+
+  void pushHome() {
+    pushReplacementRoute(context, homeScreenRoute);
+  }
+
+  Future<void> addUser(String email, String username) async {
+    final CollectionReference users = _firestore.collection('users');
+    await users.doc(email).set({
+      'username': username,
+      'email': email,
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +50,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 200),
+          padding: const EdgeInsets.symmetric(vertical: 150),
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 10),
             color: Colors.transparent,
@@ -36,7 +58,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               scrollDirection: Axis.vertical,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(left: 300),
+                  padding: const EdgeInsets.only(left: 250),
                   child: ElevatedButton(
                     style: ButtonStyle(
                         backgroundColor:
@@ -74,7 +96,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(
-                          width: 350,
+                          width: 300,
                           child: Form(
                             key: formKey,
                             child: TextField(
@@ -95,7 +117,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ),
                         SizedBox(
-                          width: 350,
+                          width: 300,
                           child: TextField(
                             controller: passwordController,
                             maxLines: 1,
@@ -112,7 +134,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ),
                         SizedBox(
-                          width: 350,
+                          width: 300,
                           child: TextField(
                             controller: emailController,
                             maxLines: 1,
@@ -136,12 +158,45 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     Positioned(
                       bottom: 75,
                       right: 35,
-                      child: ClipOval(
-                        child: Container(
-                          height: 50,
-                          width: 50,
-                          color: Colors.lightGreenAccent,
-                          child: const Icon(Icons.check),
+                      child: GestureDetector(
+                        onTap: () async {
+                          try {
+                            String username = usernameController.text;
+                            String email = emailController.text;
+                            String password = passwordController.text;
+                            final form = formKey.currentState!;
+                            if (form.validate()) {}
+                            await FirebaseAuth.instance
+                                .createUserWithEmailAndPassword(
+                                    email: email, password: password);
+                            addUser(email, username);
+                            pushHome();
+                          } on FirebaseAuthException catch (e) {
+                            if (e.code == 'weak-password') {
+                              await showErrorDialog(context,
+                                  "Weak password : Password should be above 6 characters");
+                            } else if (e.code == 'invalid-password') {
+                              await showErrorDialog(
+                                  context, 'Invalid-password');
+                            } else if (e.code == 'email-already-in-use') {
+                              await showErrorDialog(context,
+                                  'Email belongs to other user: Register with a different email');
+                            } else {
+                              await showErrorDialog(context, 'Error: $e.code');
+                            }
+                          } on TypeError catch (e) {
+                            await showErrorDialog(context, e.toString());
+                          } catch (e) {
+                            await showErrorDialog(context, e.toString());
+                          }
+                        },
+                        child: ClipOval(
+                          child: Container(
+                            height: 50,
+                            width: 50,
+                            color: Colors.lightGreenAccent,
+                            child: const Icon(Icons.check),
+                          ),
                         ),
                       ),
                     )

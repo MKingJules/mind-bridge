@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "528963630446",
+    "project_id": "mind-bridge-966d8",
+    "storage_bucket": "mind-bridge-966d8.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:528963630446:android:3860ff5fa309cc94e27d7f",
+        "android_client_info": {
+          "package_name": "com.example.mind_bridge"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "528963630446-dp6rjll3275l81ebi50jb9eu29ane6uq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA0Jdeka-ooIP2hvMROdGMZcZFDfT65sP8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "528963630446-dp6rjll3275l81ebi50jb9eu29ane6uq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

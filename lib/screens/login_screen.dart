@@ -1,6 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mind_bridge/constants/push_routes.dart';
 import 'package:mind_bridge/constants/routes.dart';
+import '../show_error_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +16,28 @@ class _LoginScreenState extends State<LoginScreen> {
   final formKey = GlobalKey<FormState>();
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+
+  void pushHome() {
+    pushReplacementRoute(context, homeScreenRoute);
+  }
+
+  Future<String?> getEmailFromUsername(String username) async {
+    try {
+      final QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('username', isEqualTo: username)
+          .limit(1)
+          .get();
+      if (snapshot.size > 0) {
+        final DocumentSnapshot document = snapshot.docs.first;
+        return document.id;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 200),
+          padding: const EdgeInsets.symmetric(vertical: 150),
           child: Container(
             padding: const EdgeInsets.only(top: 10, bottom: 10),
             color: Colors.transparent,
@@ -48,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(
-                          width: 350,
+                          width: 300,
                           child: Form(
                             key: formKey,
                             child: TextField(
@@ -69,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         SizedBox(
-                          width: 350,
+                          width: 300,
                           child: TextField(
                             controller: passwordController,
                             maxLines: 1,
@@ -92,12 +117,37 @@ class _LoginScreenState extends State<LoginScreen> {
                     Positioned(
                       bottom: 43,
                       right: 35,
-                      child: ClipOval(
-                        child: Container(
-                          height: 50,
-                          width: 50,
-                          color: Colors.lightBlueAccent,
-                          child: const Icon(Icons.chevron_right),
+                      child: GestureDetector(
+                        onTap: () async {
+                          try {
+                            String name = usernameController.text;
+                            String? email = await getEmailFromUsername(name);
+                            String password = passwordController.text;
+                            final form = formKey.currentState!;
+                            if (form.validate()) {}
+                            await FirebaseAuth.instance
+                                .signInWithEmailAndPassword(
+                                    email: email!, password: password);
+                            pushHome();
+                          } on FirebaseAuthException catch (e) {
+                            if (e.code == 'user-not-found') {
+                              await showErrorDialog(context, 'User not found');
+                            } else if (e.code == 'wrong-password') {
+                              await showErrorDialog(context, 'Wrong password');
+                            } else {
+                              await showErrorDialog(context, 'Error: $e.code');
+                            }
+                          } catch (e) {
+                            await showErrorDialog(context, e.toString());
+                          }
+                        },
+                        child: ClipOval(
+                          child: Container(
+                            height: 50,
+                            width: 50,
+                            color: Colors.lightBlueAccent,
+                            child: const Icon(Icons.chevron_right),
+                          ),
                         ),
                       ),
                     ),
@@ -117,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: 50,
                 ),
                 Padding(
-                  padding: const EdgeInsets.only(right: 300),
+                  padding: const EdgeInsets.only(right: 250),
                   child: ElevatedButton(
                     style: ButtonStyle(
                         backgroundColor:
